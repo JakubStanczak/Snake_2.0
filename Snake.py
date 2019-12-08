@@ -27,7 +27,9 @@ class Snake:
         self.prev_dir = ["x", +1]
 
     def draw(self):
-        if self.apple_inside:
+        if not alive:
+            color = (255, 0, 0)
+        elif self.apple_inside:
             color = (160, 245, 60)
         else:
             color = (0, 255, 0)
@@ -70,6 +72,7 @@ def board_init():
         snake.append(Snake(board_width//2 - i, board_height // 2))
     new_apple()
 
+
 def new_apple():
     good_choice = False
     while not good_choice:
@@ -80,7 +83,6 @@ def new_apple():
             if s.x == x and s.y == y:
                 good_choice = False
     apples.append(Apple(x, y))
-
 
 
 def draw():
@@ -97,8 +99,12 @@ def draw():
 
 
 def if_collision():
-    if vars(snake[0])[snake_dir[0]] + snake_dir[1] > board_width or vars(snake[0])[snake_dir[0]] + snake_dir[1] < 0:
-        print("zjebales")
+    board_dim = {"x": board_width, "y": board_height}
+    if vars(snake[0])[snake_dir[0]] + snake_dir[1] >= board_dim[snake_dir[0]] or vars(snake[0])[snake_dir[0]] + snake_dir[1] <= 0:
+        return True
+    for s in snake:
+        if vars(snake[0])[snake_dir[0]] + snake_dir[1] == vars(s)[snake_dir[0]] and vars(snake[0])[other_dir[snake_dir[0]]] == vars(s)[other_dir[snake_dir[0]]]:
+            return True
 
 
 def if_ate_apple():
@@ -106,24 +112,28 @@ def if_ate_apple():
         if apple.x == snake[0].x and apple.y == snake[0].y:
             apples.pop(apples.index(apple))
             snake[0].apple_inside = True
+            new_apple()
             break
 
 
 def move():
-    print("move")
     vars(snake[0])[snake_dir[0]] += snake_dir[1]
     for i in range(1, len(snake)):
         vars(snake[i])[snake[i-1].prev_dir[0]] += snake[i-1].prev_dir[1]
 
-    # updating in reverse: previous direction and apple inside
-    for i in reversed(range(len(snake)-1)):
+    #  extending snake if apple reached its end
+    if snake[-1].apple_inside:
+        snake[-1].apple_inside = False
+        snake.append(Snake(snake[-1].x, snake[-1].y))
+        vars(snake[-1])[snake[-3].prev_dir[0]] -= snake[-3].prev_dir[1]
+
+    #  updating in reverse: previous direction and apple inside
+    for i in reversed(range(1, len(snake))):
         snake[i].prev_dir = snake[i-1].prev_dir
+        if snake[i - 1].apple_inside:
+            snake[i].apple_inside = True
+            snake[i - 1].apple_inside = False
     snake[0].prev_dir = snake_dir
-
-    if snake[i - 1].apple_inside:
-        snake[i].apple_inside = True
-        snake[i - 1].apple_inside = False
-
 
 
 def change_dir(new_dir):
@@ -137,9 +147,11 @@ def change_dir(new_dir):
 
 
 board_init()
-snake_dir = ["y", +1]
-next_dir = ["y", +1]
+snake_dir = ["x", +1]
+next_dir = ["x", +1]
+other_dir = {"x": "y", "y": "x"}
 run = True
+alive = True
 while run:
 
     for event in pygame.event.get():
@@ -155,11 +167,15 @@ while run:
             elif event.key == pygame.K_DOWN:
                 change_dir(["y", +1])
 
-    pygame.time.delay(300)
-    snake_dir = next_dir
-    if_collision()
-    move()
-    if_ate_apple()
+    pygame.time.delay(200)
+    if alive:
+        snake_dir = next_dir
+        if if_collision():
+            alive = False
+        move()
+        if_ate_apple()
+
+
     # GAME
     # chose direction
     # check if collision
