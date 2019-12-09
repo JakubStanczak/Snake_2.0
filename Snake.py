@@ -1,9 +1,10 @@
 import pygame
 import random
-
+from AI import pick_dir
 pygame.init()
 
 snake_start_len = 5
+marker_font = pygame.font.SysFont("calibri", 10, bold=True)
 
 class Marker:
     def __init__(self, x, y):
@@ -14,12 +15,15 @@ class Marker:
 
     def draw(self):
         pygame.draw.rect(win, self.color, (self.x * Snake.dim, self.y * Snake.dim, Snake.dim, Snake.dim), 1)
+        rendered_num = marker_font.render(str(self.num), True, self.color)
+        win.blit(rendered_num, (self.x * Snake.dim + Snake.dim // 2, self.y * Snake.dim + Snake.dim // 2))
+
 
     def __repr__(self):
         return "{} {}".format(self.x, self.y)
 
 class Snake:
-    dim = 20
+    dim = 30
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -71,6 +75,19 @@ def board_init():
     for i in range(snake_start_len):
         snake.append(Snake(board_width//2 - i, board_height // 2))
     new_apple()
+
+    i = 1
+    for x in range(board_width):
+        ys = range(1, board_height)
+        if x % 2 == 1:
+            ys = reversed(ys)
+        for y in ys:
+            markers[x][y].num = i
+            i += 1
+    for x in range(1, board_width):
+        markers[-x][0].num = i
+        i += 1
+    markers[0][0].num = 0
 
 
 def new_apple():
@@ -169,6 +186,7 @@ while run:
 
     pygame.time.delay(200)
     if alive:
+        next_dir = pick_dir()
         snake_dir = next_dir
         if if_collision():
             alive = False
