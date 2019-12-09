@@ -1,6 +1,5 @@
 import pygame
 import random
-from AI import pick_dir
 pygame.init()
 
 snake_start_len = 5
@@ -20,7 +19,7 @@ class Marker:
 
 
     def __repr__(self):
-        return "{} {}".format(self.x, self.y)
+        return "{} {} number {}".format(self.x, self.y, self.num)
 
 class Snake:
     dim = 30
@@ -162,6 +161,33 @@ def change_dir(new_dir):
         next_dir = new_dir
         return True
 
+def pick_dir():
+    adj_markers = adjacent_markers(snake[0].x, snake[0].y)
+    apple_num = markers[apples[0].x][apples[0].y].num
+    picked_marker = adj_markers[-1]
+
+    picked_dir = []
+    if snake[0].x - picked_marker.x == 0:
+        picked_dir.append("y")
+    else:
+        picked_dir.append("x")
+    if picked_marker.x - snake[0].x < 0 or picked_marker.y - snake[0].y < 0:
+        picked_dir.append(-1)
+    else:
+        picked_dir.append(1)
+    print(adj_markers)
+    print(picked_dir)
+    return picked_dir
+
+
+def adjacent_markers(x, y):
+    adjacent_markers = []
+    for column in markers:
+        for marker in column:
+            if abs(x - marker.x) <= 1 and abs(y - marker.y) <= 1:
+                if (x - marker.x == 0 or y - marker.y == 0) and not (x == marker.x and y == marker.y):
+                    adjacent_markers.append(marker)
+    return adjacent_markers
 
 board_init()
 snake_dir = ["x", +1]
@@ -186,8 +212,8 @@ while run:
 
     pygame.time.delay(200)
     if alive:
-        next_dir = pick_dir()
-        snake_dir = next_dir
+
+        snake_dir = pick_dir()
         if if_collision():
             alive = False
         move()
