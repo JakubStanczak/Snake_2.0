@@ -2,7 +2,8 @@ import pygame
 import random
 pygame.init()
 
-snake_start_len = 5
+debug_mode = False
+snake_start_len = 25
 marker_font = pygame.font.SysFont("calibri", 10, bold=True)
 
 class Marker:
@@ -33,7 +34,7 @@ class Snake:
         if not alive:
             color = (255, 0, 0)
         elif self.apple_inside:
-            color = (160, 245, 60)
+            color = (250, 200, 0)
         else:
             color = (0, 255, 0)
         pygame.draw.rect(win, color, (self.x * self.dim, self.y * self.dim, self.dim, self.dim))
@@ -103,20 +104,22 @@ def new_apple():
 
 def draw():
     win.fill((255, 255, 255))
-    for line in markers:
-        for marker in line:
-            marker.draw()
     for s in snake:
         s.draw()
     for apple in apples:
         apple.draw()
+
+    if debug_mode:
+        for line in markers:
+            for marker in line:
+                marker.draw()
 
     pygame.display.update()
 
 
 def if_collision():
     board_dim = {"x": board_width, "y": board_height}
-    if vars(snake[0])[snake_dir[0]] + snake_dir[1] >= board_dim[snake_dir[0]] or vars(snake[0])[snake_dir[0]] + snake_dir[1] <= 0:
+    if vars(snake[0])[snake_dir[0]] + snake_dir[1] >= board_dim[snake_dir[0]] or vars(snake[0])[snake_dir[0]] + snake_dir[1] < 0:
         return True
     for s in snake:
         if vars(snake[0])[snake_dir[0]] + snake_dir[1] == vars(s)[snake_dir[0]] and vars(snake[0])[other_dir[snake_dir[0]]] == vars(s)[other_dir[snake_dir[0]]]:
@@ -164,7 +167,45 @@ def change_dir(new_dir):
 def pick_dir():
     adj_markers = adjacent_markers(snake[0].x, snake[0].y)
     apple_num = markers[apples[0].x][apples[0].y].num
-    picked_marker = adj_markers[-1]
+    head_num = markers[snake[0].x][snake[0].y].num
+    max_mark_num = board_width * board_height - 1
+    numbers_with_snake = [markers[s.x][s.y].num for s in snake]
+    num_of_apples_eaten = 0
+    for s in snake:
+        if s.apple_inside:
+            num_of_apples_eaten += 1
+
+    # first pick - go in circles
+    if head_num == max_mark_num:
+        picked_marker = markers[0][0]
+    else:
+        for adj_m in adj_markers:
+            if adj_m.num == head_num + 1:
+                picked_marker = adj_m
+                print("first pick")
+
+    if len(snake) > 2 * board_width:
+        for adj_m in adj_markers:
+            if adj_m.num > numbers_with_snake[-1] - num_of_apples_eaten:
+                adj_markers.pop(adj_markers.index(adj_m))
+
+    # second pic - take shortcut
+    for adj_m in adj_markers:
+        if adj_m.num not in numbers_with_snake:
+            if adj_m.num > head_num and adj_m.num <= apple_num:
+                picked_marker = adj_m
+                print("second pic")
+
+    # third pick - if apple behind take shortest route to 0
+    if apple_num < head_num and head_num != max_mark_num:
+        # picked_marker = markers[0][0]
+        for adj_m in adj_markers:
+            if adj_m.num not in numbers_with_snake:
+                if adj_m.num > picked_marker.num:
+                    print("third pick")
+                    picked_marker = adj_m
+
+
 
     picked_dir = []
     if snake[0].x - picked_marker.x == 0:
@@ -175,8 +216,10 @@ def pick_dir():
         picked_dir.append(-1)
     else:
         picked_dir.append(1)
-    print(adj_markers)
-    print(picked_dir)
+    print("head number {}".format(head_num))
+    print("adjacent numbers {}".format(adj_markers))
+    print("picked number: {}".format(picked_marker))
+    print("picked direction: {}".format(picked_dir))
     return picked_dir
 
 
@@ -210,9 +253,9 @@ while run:
             elif event.key == pygame.K_DOWN:
                 change_dir(["y", +1])
 
-    pygame.time.delay(200)
+    pygame.time.delay(2)
     if alive:
-
+        # snake_dir = next_dir
         snake_dir = pick_dir()
         if if_collision():
             alive = False
