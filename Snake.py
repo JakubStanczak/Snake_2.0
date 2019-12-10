@@ -3,7 +3,7 @@ import random
 pygame.init()
 
 debug_mode = False
-snake_start_len = 25
+snake_start_len = 40
 marker_font = pygame.font.SysFont("calibri", 10, bold=True)
 
 class Marker:
@@ -23,7 +23,7 @@ class Marker:
         return "{} {} number {}".format(self.x, self.y, self.num)
 
 class Snake:
-    dim = 30
+    dim = 10
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -43,7 +43,7 @@ class Snake:
         return "{} {}".format(self.x, self.y)
 
 class Apple:
-    dim = 7
+    dim = 5
 
     def __init__(self, x, y):
         self.x = x
@@ -108,6 +108,12 @@ def draw():
         s.draw()
     for apple in apples:
         apple.draw()
+
+    for i in range(len(snake)-2):
+        pygame.draw.line(win, (0, 100, 0),
+                         (snake[i].x * Snake.dim + Snake.dim // 2, snake[i].y * Snake.dim + Snake.dim // 2),
+                         (snake[i+1].x * Snake.dim + Snake.dim // 2, snake[i+1].y * Snake.dim + Snake.dim // 2), 1)
+
 
     if debug_mode:
         for line in markers:
@@ -253,7 +259,7 @@ while run:
             elif event.key == pygame.K_DOWN:
                 change_dir(["y", +1])
 
-    pygame.time.delay(2)
+    pygame.time.delay(5)
     if alive:
         # snake_dir = next_dir
         snake_dir = pick_dir()
